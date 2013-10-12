@@ -32,6 +32,8 @@ function update () {
   })
 }
 
+var jsonRgx = /json/i
+
 // TODO(isaacs): Show a fancy search page if no query, not a 404
 function search (req, res) {
   var u = req.url && req.url.split('?')[1]
@@ -46,10 +48,14 @@ function search (req, res) {
 
   req.model.load('search', qs)
   req.model.end(function(er, m) {
-    if (er)
-      res.error(er)
-    else
-      res.template('search.ejs', m.search)
+    if (er) return res.error(er)
+
+    if (jsonRgx.test(req.headers.accept)) {
+      res.setHeader('content-type', 'application/json');
+      return res.end(JSON.stringify(m))
+    }
+
+    res.template('search.ejs', m.search)
   })
 
   searches.push(qs.q)
